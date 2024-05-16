@@ -235,7 +235,7 @@ class NeuralNetwork:
         m = AL.shape[1]
         Y = Y.reshape(AL.shape)
 
-        dAL = AL - Y
+        dAL = -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
         current_cache = caches[L - 1]
         dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(
@@ -247,12 +247,13 @@ class NeuralNetwork:
 
         for l in reversed(range(L - 1)):
             current_cache = caches[l]
-            cache_tmp, D = current_cache
+            linear_cache, activation_cache = current_cache
+            D = activation_cache
             dA = grads["dA" + str(l + 1)]
             dA = dA * D
             dA = dA / keep_prob
             dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(
-                dA, cache_tmp, activation="relu"
+                dA, linear_cache, activation="relu"
             )
             grads["dA" + str(l)] = dA_prev_temp
             grads["dW" + str(l + 1)] = dW_temp
@@ -370,9 +371,9 @@ class NeuralNetwork:
         self,
         X,
         Y,
-        X_val,
-        Y_val,
         num_epochs,
+        X_val=None,
+        Y_val=None,
         learning_rate=0.01,
         batch_size=32,
         lambd=0,
@@ -430,6 +431,7 @@ class NeuralNetwork:
                 if X_val is not None and Y_val is not None:
                     AL_val, _ = self.forward_propagation(X_val, self.parameters)
                     cost_val = self.compute_cost(AL_val, Y_val)
+                    self.valid_cost.append(cost_val)
                     print(
                         f"Cost after epoch {epoch}: {epoch_cost}, Cost validation: {cost_val}"
                     )
