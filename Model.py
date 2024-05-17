@@ -386,14 +386,17 @@ class NeuralNetwork:
         m = X.shape[1]
 
         for epoch in range(num_epochs):
+            permutation = np.random.permutation(m)
+            shuffled_X = X[:, permutation]
+            shuffled_Y = Y[:, permutation]
             epoch_cost = 0
             num_interations = m // batch_size
 
             for i in range(num_interations):
                 start = i * batch_size
                 end = min(start + self.batch_size, m)
-                X_batch = X[:, start:end]
-                Y_batch = Y[:, start:end]
+                X_batch = shuffled_X[:, start:end]
+                Y_batch = shuffled_Y[:, start:end]
 
                 if keep_prob == 1:
                     AL, caches = self.forward_propagation(X_batch, self.parameters)
@@ -410,7 +413,7 @@ class NeuralNetwork:
                     )
 
                 # cost = self.compute_cost_with_regularization(AL,Y,self.parameters,lambd)
-
+                
                 if lambd == 0 and keep_prob == 1:
                     grads = self.backward_propagation(AL, Y_batch, caches)
                 elif lambd != 0:
@@ -429,13 +432,29 @@ class NeuralNetwork:
             costs.append(epoch_cost)
             if print_cost:
                 if X_val is not None and Y_val is not None:
-                    AL_val, _ = self.forward_propagation(X_val, self.parameters)
-                    cost_val = self.compute_cost(AL_val, Y_val)
-                    self.valid_cost.append(cost_val)
+                    permutation = np.random.permutation(X_val.shape[1])
+                    X_val = X_val[:, permutation]
+                    Y_val = Y_val[:, permutation]
+                    val_cost = 0
+                    num_interations_val = X_val.shape[1] // batch_size
+                    for i in range(num_interations_val):
+                        start = i * batch_size
+                        end = min(start + self.batch_size, X_val.shape[1])
+                        X_batch_val = X_val[:, start:end]
+                        Y_batch_val = Y_val[:, start:end]
+
+                        AL_val, caches = self.forward_propagation(
+                            X_batch_val, self.parameters
+                        )
+                        cost_val = self.compute_cost(AL_val, Y_batch_val)
+                        val_cost += cost_val / num_interations_val
+                    self.valid_cost.append(val_cost)
+#                    AL_val, _ = self.forward_propagation(X_val, self.parameters)
+#                   cost_val = self.compute_cost_(AL_val, Y_val,parameters=self.parameters, lambd=lambd)
+#                    self.valid_cost.append(cost_val)
                     print(
                         f"Cost after epoch {epoch}: {epoch_cost}, Cost validation: {cost_val}"
                     )
-                    self.predict(X_val, Y_val)
                 else:
                     print(f"Cost after epoch {epoch}: {epoch_cost}")
 
