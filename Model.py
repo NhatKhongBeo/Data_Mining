@@ -1,7 +1,7 @@
 import numpy as np
 import copy
-
-
+import pickle
+import os
 class NeuralNetwork:
     def __init__(self, layers_dims):
         self.layers_dims = layers_dims
@@ -453,3 +453,20 @@ class NeuralNetwork:
                 p[0, i] = 0
         print("Accuracy: " + str(np.sum((p == y) / m)))
         return p
+
+    
+    def save_model(self, file_path):
+        if os.path.exists(file_path):
+            with open(file_path, "wb") as f:
+                existing_parameters = pickle.load(f)
+                
+            existing_parameters.update(self.parameters)
+            parameters = existing_parameters
+        
+        with open(file_path, "wb") as f:
+            pickle.dump(self.parameters, f)
+    
+    def load_model_parameters(self,file_path):
+        with open(file_path, 'rb') as file:
+            self.parameters = pickle.load(file)
+        return self.parameters
